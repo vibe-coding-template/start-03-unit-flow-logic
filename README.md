@@ -1,5 +1,3 @@
-Viewed start-03-unit-flow-logic.html:1-555
-
 針對 **`start-03-unit-flow-logic` (指令流邏輯：單次觸發與重複發送)** 單元，這是學員從「靜態指令」進化到「動態節奏」的進階課程。它要求學員具備 **時序邏輯 (Temporal Logic)** 與 **失效安全 (Fail-safe)** 的意識，學習如何利用 `setInterval` 構建穩定的控制循環，處理多按鍵衝突，並實作極其重要的「死人開關 (Dead Man's Switch)」安全機制。
 
 以下是在 **GitHub Classroom** 部署其作業 (Assignments) 的具體建議：

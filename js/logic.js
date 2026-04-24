@@ -114,6 +114,7 @@ function emergencyStop() {
 // 按鍵按下
 window.addEventListener('keydown', (e) => {
     if (keysActive.hasOwnProperty(e.code) && !keysActive[e.code]) {
+        e.preventDefault();
         keysActive[e.code] = true;
         const btn = document.querySelector(`.ctrl-btn[data-key="${e.code}"]`);
         if (btn) btn.classList.add('active');

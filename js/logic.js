@@ -35,9 +35,17 @@ function addLog(message, type = 'system') {
     logContainer.scrollTop = logContainer.scrollHeight;
 }
 
+function hasActiveKeys() {
+    return Object.values(keysActive).some(Boolean);
+}
+
+function updateStatus(isActive) {
+    statusDot.className = isActive ? 'dot active' : 'dot';
+    statusText.textContent = isActive ? '傳輸中...' : '系統就緒';
+}
+
 // --- 核心邏輯：指令發送 ---
 function sendCommand() {
-    // TODO: 任務 2 - 根據 keysActive 合成最終指令
     const active = Object.keys(keysActive).filter(k => keysActive[k]);
     
     if (active.length === 0) {
@@ -51,14 +59,11 @@ function sendCommand() {
 
 // --- 核心邏輯：流量控制 ---
 function startFlow() {
-    // TODO: 任務 1 - 檢查 flowInterval 是否已存在，避免重複啟動
     if (flowInterval) return;
 
     currentIntervalMs = parseInt(intervalInput.value) || 100;
     addLog(`啟動指令流 (頻率: ${currentIntervalMs}ms)`, "system");
-    
-    statusDot.className = 'dot active';
-    statusText.textContent = '傳輸中...';
+    updateStatus(true);
 
     // 立即發送一次，然後開始循環
     sendCommand();
@@ -66,25 +71,41 @@ function startFlow() {
 }
 
 function stopFlow() {
-    // TODO: 任務 1 - 清除定시器並歸零狀態
     if (flowInterval) {
         clearInterval(flowInterval);
         flowInterval = null;
         addLog("停止指令流", "stop");
-        
-        statusDot.className = 'dot';
-        statusText.textContent = '系統就緒';
     }
+
+    updateStatus(false);
+}
+
+function syncFlow({ sendImmediate = false } = {}) {
+    if (hasActiveKeys()) {
+        if (flowInterval) {
+            if (sendImmediate) sendCommand();
+            return;
+        }
+
+        startFlow();
+        return;
+    }
+
+    stopFlow();
 }
 
 // --- 任務 3：失效安全 (Dead Man's Switch) ---
 function emergencyStop() {
-    addLog("!!! 安全機制觸發：緊急停機 !!!", "safety");
-    // TODO: 重置所有按鍵狀態並停止指令流
+    if (!hasActiveKeys() && !flowInterval) return;
+
     for (const key in keysActive) {
         keysActive[key] = false;
     }
-    document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+
+    ctrlButtons.forEach((btn) => btn.classList.remove('active'));
+
+    addLog("!!! 安全機制觸發：緊急停機 !!!", "safety");
+    addLog("發送指令: STOP", "stop");
     stopFlow();
 }
 
@@ -96,7 +117,7 @@ window.addEventListener('keydown', (e) => {
         keysActive[e.code] = true;
         const btn = document.querySelector(`.ctrl-btn[data-key="${e.code}"]`);
         if (btn) btn.classList.add('active');
-        startFlow();
+        syncFlow({ sendImmediate: true });
     }
 });
 
@@ -106,11 +127,8 @@ window.addEventListener('keyup', (e) => {
         keysActive[e.code] = false;
         const btn = document.querySelector(`.ctrl-btn[data-key="${e.code}"]`);
         if (btn) btn.classList.remove('active');
-        
-        // 如果沒有任何按鍵按下，停止指令流
-        if (!Object.values(keysActive).some(v => v)) {
-            stopFlow();
-        }
+
+        syncFlow({ sendImmediate: true });
     }
 });
 
@@ -122,25 +140,21 @@ ctrlButtons.forEach(btn => {
         if (!keysActive[key]) {
             keysActive[key] = true;
             btn.classList.add('active');
-            startFlow();
+            syncFlow({ sendImmediate: true });
         }
     });
 
     btn.addEventListener('mouseup', () => {
         keysActive[key] = false;
         btn.classList.remove('active');
-        if (!Object.values(keysActive).some(v => v)) {
-            stopFlow();
-        }
+        syncFlow({ sendImmediate: true });
     });
 
     btn.addEventListener('mouseleave', () => {
         if (keysActive[key]) {
             keysActive[key] = false;
             btn.classList.remove('active');
-            if (!Object.values(keysActive).some(v => v)) {
-                stopFlow();
-            }
+            syncFlow({ sendImmediate: true });
         }
     });
 });

@@ -63,4 +63,4 @@ jobs:
       - name: Autograding Reporter
         uses: education/autograding-grading-reporter@v1
         with:
-          runners: check-files,check-safety,check-multi-key,check-timer-leak
+          runners: 'check-files,check-safety,check-multi-key,check-timer-leak'

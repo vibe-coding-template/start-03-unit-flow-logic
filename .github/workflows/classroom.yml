@@ -24,7 +24,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Check required files
-        id: check-files
+        id: checkfiles
         uses: education/autograding-command-grader@v1
         with:
           test-name: Check Required Files
@@ -34,7 +34,7 @@ jobs:
           max-score: 25
 
       - name: Check safety mechanism
-        id: check-safety
+        id: checksafety
         uses: education/autograding-command-grader@v1
         with:
           test-name: Safety Mechanism Test
@@ -43,7 +43,7 @@ jobs:
           max-score: 25
 
       - name: Check multi-key logic
-        id: check-multi-key
+        id: checkmultikey
         uses: education/autograding-command-grader@v1
         with:
           test-name: Multi-key Logic Test
@@ -52,7 +52,7 @@ jobs:
           max-score: 25
 
       - name: Check timer leak
-        id: check-timer-leak
+        id: checktimerleak
         uses: education/autograding-command-grader@v1
         with:
           test-name: Timer Leak Test
@@ -63,9 +63,9 @@ jobs:
       - name: Autograding Reporter
         uses: education/autograding-grading-reporter@v1
         env:
-          check-files_results: "${{ steps.check-files.outputs.result }}"
-          check-safety_results: "${{ steps.check-safety.outputs.result }}"
-          check-multi-key_results: "${{ steps.check-multi-key.outputs.result }}"
-          check-timer-leak_results: "${{ steps.check-timer-leak.outputs.result }}"
+          CHECKFILES_RESULTS: "${{ steps.checkfiles.outputs.result }}"
+          CHECKSAFETY_RESULTS: "${{ steps.checksafety.outputs.result }}"
+          CHECKMULTIKEY_RESULTS: "${{ steps.checkmultikey.outputs.result }}"
+          CHECKTIMERLEAK_RESULTS: "${{ steps.checktimerleak.outputs.result }}"
         with:
-          runners: "check-files,check-safety,check-multi-key,check-timer-leak"
+          runners: checkfiles,checksafety,checkmultikey,checktimerleak

@@ -1,0 +1,12 @@
+{
+  "name": "start-03-unit-flow-logic",
+  "version": "1.0.0",
+  "description": "Autograding tests for Flow Logic unit",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

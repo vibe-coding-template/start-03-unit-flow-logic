@@ -1,0 +1,66 @@
+name: GitHub Classroom Autograding
+on: [push]
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  build:
+    name: Autograding
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Check required files
+        id: check-files
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: Check Required Files
+          setup-command: chmod +x .github/scripts/check_files.sh
+          command: ./.github/scripts/check_files.sh
+          timeout: 1
+          max-score: 25
+
+      - name: Check safety mechanism
+        id: check-safety
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: Safety Mechanism Test
+          command: npx playwright test --grep "當視窗失去焦點時應觸發緊急停機"
+          timeout: 5
+          max-score: 25
+
+      - name: Check multi-key logic
+        id: check-multi-key
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: Multi-key Logic Test
+          command: npx playwright test --grep "多按鍵合成邏輯驗證"
+          timeout: 5
+          max-score: 25
+
+      - name: Check timer leak
+        id: check-timer-leak
+        uses: education/autograding-command-grader@v1
+        with:
+          test-name: Timer Leak Test
+          command: npx playwright test --grep "定時器累積與洩漏測試"
+          timeout: 5
+          max-score: 25
+
+      - name: Autograding Reporter
+        uses: education/autograding-grading-reporter@v1
+        with:
+          runners: check-files,check-safety,check-multi-key,check-timer-leak

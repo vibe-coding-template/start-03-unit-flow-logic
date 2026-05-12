@@ -1,0 +1,67 @@
+name: Autograde Sync To Vibe Coding
+
+on:
+  workflow_dispatch:
+    inputs:
+      userId:
+        description: "Student userId"
+        required: true
+        type: string
+      assignmentId:
+        description: "Assignment id"
+        required: true
+        type: string
+      score:
+        description: "Auto grade score"
+        required: true
+        default: "80"
+        type: string
+      maxScore:
+        description: "Auto grade max score"
+        required: true
+        default: "100"
+        type: string
+      status:
+        description: "Grade status"
+        required: false
+        default: "completed"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Send Auto Grade Webhook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          test -n "${{ secrets.VC_AUTOGRADE_URL }}" || { echo "VC_AUTOGRADE_URL is missing"; exit 1; }
+          test -n "${{ secrets.VC_AUTOGRADE_TOKEN }}" || { echo "VC_AUTOGRADE_TOKEN is missing"; exit 1; }
+
+      - name: Build payload
+        id: payload
+        env:
+          USER_ID: ${{ github.event.inputs.userId }}
+          ASSIGNMENT_ID: ${{ github.event.inputs.assignmentId }}
+          SCORE: ${{ github.event.inputs.score }}
+          MAX_SCORE: ${{ github.event.inputs.maxScore }}
+          STATUS: ${{ github.event.inputs.status }}
+        run: |
+          payload='{"userId":"'"$USER_ID"'","assignmentId":"'"$ASSIGNMENT_ID"'","score":'"$SCORE"',"maxScore":'"$MAX_SCORE"',"status":"'"$STATUS"'","runUrl":"'"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"'","workflow":"'"$GITHUB_WORKFLOW"'","commitSha":"'"$GITHUB_SHA"'"}'
+          printf '%s' "$payload" > payload.json
+          echo "payload_path=payload.json" >> "$GITHUB_OUTPUT"
+
+      - name: Sign payload and send
+        env:
+          VC_AUTOGRADE_URL: ${{ secrets.VC_AUTOGRADE_URL }}
+          VC_AUTOGRADE_TOKEN: ${{ secrets.VC_AUTOGRADE_TOKEN }}
+          PAYLOAD_PATH: ${{ steps.payload.outputs.payload_path }}
+        run: |
+          payload="$(cat "$PAYLOAD_PATH")"
+          sig="sha256=$(printf %s "$payload" | openssl dgst -sha256 -hmac "$VC_AUTOGRADE_TOKEN" | sed 's/^.* //')"
+          curl -sS -X POST "$VC_AUTOGRADE_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$payload"
